@@ -1,5 +1,4 @@
 -- NeighborLink Database Schema
-CREATE DATABASE IF NOT EXISTS neighborlink;
 USE neighborlink;
 
 -- Users table
