@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provider Profile – NeighborLink</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.profile-hero { background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; padding: 3rem 0 6rem; }
+.profile-card { background: var(--white); border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); margin-top: -4rem; padding: 2rem; }
+.review-item { padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.review-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.review-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.book-sidebar { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 1.5rem; position: sticky; top: 86px; }
+.detail-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+@media (max-width: 900px) { .detail-layout { grid-template-columns: 1fr; } .book-sidebar { position: relative; top: auto; } }
+.trust-breakdown { display: flex; flex-direction: column; gap: 0.85rem; }
+.info-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--ink-2); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="/" class="nav-logo">Neighbor<span class="dot">Link</span></a>
+    <div class="nav-links">
+      <a href="/pages/services.html" class="nav-link">← Back to Services</a>
+    </div>
+    <div class="nav-actions" id="nav-actions"></div>
+  </div>
+</nav>
+
+<div class="profile-hero">
+  <div class="container">
+    <div style="display:inline-flex;" id="breadcrumb">
+      <a href="/pages/services.html" style="color:rgba(255,255,255,0.6);font-size:0.88rem;">Services</a>
+      <span style="color:rgba(255,255,255,0.4);margin:0 0.5rem;">/</span>
+      <span style="color:white;font-size:0.88rem;" id="provider-cat-crumb">Provider</span>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:4rem;">
+  <div class="profile-card" id="profile-card">
+    <div style="text-align:center;padding:3rem;"><div style="font-size:2rem;animation:spin 1s linear infinite;">⏳</div></div>
+  </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Book Service</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="booking-modal-body">
+      <div id="book-error" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.88rem;color:var(--danger);"></div>
+      <form id="booking-form" style="display:flex;flex-direction:column;gap:1.1rem;">
+        <div class="form-group">
+          <label class="form-label">Service Description</label>
+          <textarea id="b-desc" class="form-control" placeholder="Briefly describe what you need done..." style="min-height:80px;"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Preferred Date *</label>
+            <input type="date" id="b-date" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Time *</label>
+            <input type="time" id="b-time" class="form-control" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service Address *</label>
+          <input type="text" id="b-address" class="form-control" placeholder="Where should the provider go?" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional Notes</label>
+          <textarea id="b-notes" class="form-control" placeholder="Any special instructions?" style="min-height:60px;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">Confirm Booking</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let providerId = null;
+let providerData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavUser();
+  const params = new URLSearchParams(window.location.search);
+  providerId = params.get('id');
+  if (!providerId) { window.location.href = '/pages/services.html'; return; }
+  
+  // Set min date to today
+  document.getElementById('b-date').min = new Date().toISOString().split('T')[0];
+  
+  await loadProvider();
+});
+
+async function loadProvider() {
+  const res = await Api.provider(providerId);
+  if (!res.success) {
+    document.getElementById('profile-card').innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-title">Provider not found</div></div>`;
+    return;
+  }
+  
+  providerData = res.provider;
+  const p = res.provider;
+  const reviews = res.reviews;
+  
+  document.title = `${p.name} – NeighborLink`;
+  document.getElementById('provider-cat-crumb').textContent = p.name;
+  
+  const initials = p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  
+  document.getElementById('profile-card').innerHTML = `
+    <div class="detail-layout">
+      <div>
+        <!-- Profile Header -->
+        <div style="display:flex;gap:1.5rem;align-items:flex-start;margin-bottom:2rem;flex-wrap:wrap;">
+          <div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;font-size:2rem;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${initials}</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+              <h2 style="font-size:1.75rem;margin:0;">${p.name}</h2>
+              <span class="trust-badge">🛡️ Trust Score: ${parseFloat(p.trust_score).toFixed(1)}</span>
+            </div>
+            <div style="font-size:1rem;color:var(--ink-3);margin-top:0.3rem;">${p.category_icon} ${p.category_name} · ${p.experience_years} years experience</div>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;flex-wrap:wrap;">
+              <span class="stars">${Format.stars(p.avg_rating)}</span>
+              <span style="font-weight:700;">${parseFloat(p.avg_rating||0).toFixed(1)}</span>
+              <span style="color:var(--ink-4);font-size:0.88rem;">(${reviews.length} reviews)</span>
+              <span class="availability-dot ${p.is_available?'available':'busy'}" style="margin-left:0.5rem;"></span>
+              <span style="font-size:0.88rem;color:var(--ink-3);">${p.is_available?'Available Now':'Currently Busy'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        ${p.bio ? `<div style="margin-bottom:2rem;"><h4 style="margin-bottom:0.75rem;">About</h4><p style="line-height:1.75;">${p.bio}</p></div>` : ''}
+
+        <!-- Info Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:2rem;">
+          <div class="info-row"><span>📍</span><span>${p.address||'Vellore, TN'}</span></div>
+          <div class="info-row"><span>📞</span><span>${p.phone||'Contact via booking'}</span></div>
+          <div class="info-row"><span>⚡</span><span>Responds in ~${p.response_time_minutes||30} mins</span></div>
+          <div class="info-row"><span>📅</span><span>Member since ${Format.date(p.member_since)}</span></div>
+          <div class="info-row"><span>✅</span><span>${p.completed_jobs||0} jobs completed</span></div>
+          <div class="info-row"><span>💰</span><span>${Format.currency(p.hourly_rate)} per hour</span></div>
+        </div>
+
+        <!-- Trust Breakdown -->
+        <div style="margin-bottom:2rem;">
+          <h4 style="margin-bottom:1.25rem;">Trust Score Breakdown</h4>
+          <div style="background:var(--surface);border-radius:var(--radius-lg);padding:1.5rem;">
+            <div class="trust-breakdown">
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;"><span style="font-size:0.85rem;">Service Quality (40%)</span><span style="font-weight:700;font-size:0.85rem;">${parseFloat(p.avg_rating||0).toFixed(1)}/5.0</span></div><div class="progress-bar"><div class="progress-fill" style="width:${(p.avg_rating/5*100)||0}%"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;"><span style="font-size:0.85rem;">Completion Rate (30%)</span><span style="font-weight:700;font-size:0.85rem;">${p.total_jobs > 0 ? Math.round((p.completed_jobs/p.total_jobs)*100) : 0}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${p.total_jobs > 0 ? (p.completed_jobs/p.total_jobs)*100 : 0}%"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;"><span style="font-size:0.85rem;">Response Time (20%)</span><span style="font-weight:700;font-size:0.85rem;">${p.response_time_minutes} mins avg</span></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.max(0,100-(p.response_time_minutes||30))}%"></div></div></div>
+              <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1.25rem;">
+                <div class="trust-score-large">${parseFloat(p.trust_score).toFixed(1)}</div>
+                <div><div style="font-weight:700;">Overall Trust Score</div><div style="font-size:0.82rem;color:var(--ink-3);">Out of 10.0</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div>
+          <h4 style="margin-bottom:1.25rem;">Customer Reviews (${reviews.length})</h4>
+          ${reviews.length === 0 ? `<div class="empty-state"><div class="empty-state-icon">⭐</div><div class="empty-state-title">No reviews yet</div><p>Be the first to leave a review after your booking!</p></div>` :
+          `<div style="display:flex;flex-direction:column;gap:1rem;">${reviews.map(r => `
+            <div class="review-item">
+              <div class="review-header">
+                <div class="review-avatar">${r.reviewer_name[0]}</div>
+                <div style="flex:1;"><div style="font-weight:600;font-size:0.9rem;">${r.reviewer_name}</div><div style="font-size:0.78rem;color:var(--ink-4);">${Format.date(r.created_at)}</div></div>
+                <div class="stars">${Format.stars(r.rating)}</div>
+              </div>
+              ${r.review_text ? `<p style="font-size:0.88rem;color:var(--ink-2);margin:0;line-height:1.65;">${r.review_text}</p>` : ''}
+              <div style="display:flex;gap:1rem;margin-top:0.75rem;flex-wrap:wrap;">
+                <span style="font-size:0.75rem;color:var(--ink-4);">Quality: <span style="color:#f59e0b;">${Format.stars(r.quality_rating)}</span></span>
+                <span style="font-size:0.75rem;color:var(--ink-4);">Punctuality: <span style="color:#f59e0b;">${Format.stars(r.punctuality_rating)}</span></span>
+                <span style="font-size:0.75rem;color:var(--ink-4);">Communication: <span style="color:#f59e0b;">${Format.stars(r.communication_rating)}</span></span>
+              </div>
+            </div>`).join('')}</div>`
+          }
+        </div>
+      </div>
+
+      <!-- Booking Sidebar -->
+      <div class="book-sidebar">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <div style="font-size:2rem;margin-bottom:0.25rem;">₹${p.hourly_rate||0}</div>
+          <div style="color:var(--ink-3);font-size:0.88rem;">per hour</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.5rem;font-size:0.88rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-3);">Experience</span><strong>${p.experience_years} years</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-3);">Response Time</span><strong>~${p.response_time_minutes} mins</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-3);">Completed Jobs</span><strong>${p.completed_jobs}</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-3);">Availability</span><strong style="color:${p.is_available?'var(--success)':'var(--danger)'};">${p.is_available?'✅ Available':'❌ Busy'}</strong></div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="width:100%;" onclick="openBooking()">📅 Book Now</button>
+        <div style="text-align:center;margin-top:1rem;font-size:0.78rem;color:var(--ink-4);">Free cancellation up to 2 hours before</div>
+      </div>
+    </div>`;
+}
+
+function openBooking() {
+  if (!Api.isLoggedIn()) {
+    Toast.warning('Please login to book a service');
+    setTimeout(() => window.location.href = '/pages/login.html', 1000);
+    return;
+  }
+  if (Api.getUser().role === 'provider') {
+    Toast.error('Providers cannot book services. Please use a user account.');
+    return;
+  }
+  document.getElementById('booking-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('booking-modal').classList.remove('open');
+}
+
+document.getElementById('booking-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  const errEl = document.getElementById('book-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Confirming...';
+  
+  const payload = {
+    provider_id: parseInt(providerId),
+    category_id: providerData.category_id,
+    service_description: document.getElementById('b-desc').value,
+    scheduled_date: document.getElementById('b-date').value,
+    scheduled_time: document.getElementById('b-time').value,
+    address: document.getElementById('b-address').value,
+    notes: document.getElementById('b-notes').value,
+    price_estimate: providerData.hourly_rate,
+  };
+  
+  const res = await Api.createBooking(payload);
+  
+  if (res.success) {
+    closeModal();
+    Toast.success('Booking confirmed! Check your dashboard for updates.');
+    setTimeout(() => window.location.href = `/pages/booking-confirmation.html?id=${res.booking_id}`, 1200);
+  } else {
+    errEl.style.display = 'block';
+    errEl.textContent = res.message || 'Booking failed. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Confirm Booking';
+  }
+});
+
+document.getElementById('booking-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('booking-modal')) closeModal();
+});
+</script>
+</body>
+</html>

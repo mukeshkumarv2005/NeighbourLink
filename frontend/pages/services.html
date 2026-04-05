@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Services – NeighborLink</title>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+.services-layout { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; align-items: start; }
+.filters-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 1.5rem; position: sticky; top: 86px; }
+.filter-section { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.filter-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.filter-title { font-weight: 700; font-size: 0.88rem; color: var(--ink); margin-bottom: 0.85rem; }
+.cat-filter-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; font-size: 0.88rem; }
+.cat-filter-item:hover { background: var(--surface-2); }
+.cat-filter-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.star-filter { display: flex; gap: 0.5rem; flex-direction: column; }
+.star-filter label { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.88rem; color: var(--ink-2); }
+.sort-select { width: 100%; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.88rem; color: var(--ink); background: var(--white); cursor: pointer; outline: none; }
+.sort-select:focus { border-color: var(--primary); }
+.providers-count { font-size: 0.88rem; color: var(--ink-3); margin-bottom: 1.25rem; }
+@media (max-width: 900px) { .services-layout { grid-template-columns: 1fr; } .filters-panel { position: relative; top: auto; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="/" class="nav-logo">Neighbor<span class="dot">Link</span></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pages/services.html" class="nav-link active">Services</a>
+    </div>
+    <div class="nav-actions" id="nav-actions"></div>
+  </div>
+</nav>
+
+<div style="background: var(--ink); padding: 2.5rem 0 2rem;">
+  <div class="container">
+    <h1 style="color:white;font-size:2rem;margin-bottom:1rem;">Find Local Services</h1>
+    <div class="hero-search-wrap" style="max-width:700px;">
+      <span style="padding-left:0.75rem;font-size:1.1rem;">🔍</span>
+      <input type="text" class="hero-search-input" id="search-input" placeholder="Search provider name or service..." />
+      <div class="hero-search-divider"></div>
+      <label style="display:flex;align-items:center;gap:0.5rem;padding:0 1rem;font-size:0.88rem;color:var(--ink-3);white-space:nowrap;cursor:pointer;">
+        <input type="checkbox" id="available-toggle" style="width:15px;height:15px;" /> Available now
+      </label>
+      <button class="btn btn-accent" onclick="loadProviders()">Search</button>
+    </div>
+  </div>
+</div>
+
+<div class="section-sm">
+  <div class="container">
+    <div class="services-layout">
+      <!-- Filters -->
+      <div class="filters-panel">
+        <div style="font-weight:800;font-size:1rem;margin-bottom:1.25rem;">🔧 Filters</div>
+        <div class="filter-section">
+          <div class="filter-title">Service Category</div>
+          <div class="cat-filter-item active" data-cat="" onclick="setCategory('')">
+            <span>🏠</span> All Services
+          </div>
+          <div id="cat-filters"></div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Minimum Rating</div>
+          <div class="star-filter">
+            <label><input type="radio" name="rating" value="" checked onchange="loadProviders()"> Any rating</label>
+            <label><input type="radio" name="rating" value="4.5" onchange="loadProviders()"> <span style="color:#f59e0b;">★★★★★</span> 4.5+</label>
+            <label><input type="radio" name="rating" value="4" onchange="loadProviders()"> <span style="color:#f59e0b;">★★★★</span> 4.0+</label>
+            <label><input type="radio" name="rating" value="3" onchange="loadProviders()"> <span style="color:#f59e0b;">★★★</span> 3.0+</label>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Sort By</div>
+          <select class="sort-select" id="sort-select" onchange="sortProviders()">
+            <option value="trust">Trust Score (Highest)</option>
+            <option value="rating">Rating (Highest)</option>
+            <option value="jobs">Most Jobs Completed</option>
+            <option value="rate_low">Price (Low to High)</option>
+            <option value="rate_high">Price (High to Low)</option>
+          </select>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Location</div>
+          <button class="btn btn-outline btn-sm" onclick="getNearby()" style="width:100%;">📍 Find Near Me</button>
+          <div id="location-status" style="font-size:0.78rem;color:var(--ink-3);margin-top:0.5rem;"></div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div>
+        <div class="flex-between" style="margin-bottom:1.25rem;">
+          <div class="providers-count" id="results-count">Loading providers...</div>
+        </div>
+        <div id="providers-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;"></div>
+        <div id="load-more-wrap" style="text-align:center;margin-top:2rem;display:none;">
+          <button class="btn btn-outline" id="load-more-btn" onclick="loadMore()">Load More Providers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Map section -->
+<div class="section-sm" style="background:var(--surface-2);">
+  <div class="container">
+    <div style="margin-bottom:1.5rem;">
+      <h3>Providers Near You</h3>
+      <p style="color:var(--ink-3);font-size:0.9rem;">Enable location access to see providers on the map</p>
+    </div>
+    <div id="map" style="height:400px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:var(--radius-xl);border:1px solid var(--border);">
+      <div style="text-align:center;color:var(--ink-3);">
+        <div style="font-size:3rem;margin-bottom:1rem;">🗺️</div>
+        <div style="font-weight:600;margin-bottom:0.5rem;">Map View</div>
+        <div style="font-size:0.85rem;margin-bottom:1rem;">Add your Google Maps API key to enable this feature</div>
+        <button class="btn btn-primary btn-sm" onclick="initMap()">Enable Location & Map</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+let allProviders = [];
+let displayedCount = 0;
+const PAGE_SIZE = 8;
+let currentLat = null, currentLng = null;
+let map = null;
+let providerMarkers = [];
+let currentLocationMarker = null;
+
+function showMapMessage(message) {
+  const mapEl = document.getElementById('map');
+  mapEl.innerHTML = `
+    <div style="text-align:center;color:var(--ink-3);">
+      <div style="font-size:3rem;margin-bottom:1rem;">🗺️</div>
+      <div style="font-weight:600;margin-bottom:0.5rem;">${message}</div>
+    </div>`;
+}
+
+function renderMap(lat, lng) {
+  const mapEl = document.getElementById('map');
+  mapEl.innerHTML = '';
+  mapEl.style.display = 'block';
+
+  if (!map) {
+    map = L.map('map').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+  } else {
+    map.setView([lat, lng], 13);
+    providerMarkers.forEach(marker => map.removeLayer(marker));
+    providerMarkers = [];
+    if (currentLocationMarker) {
+      map.removeLayer(currentLocationMarker);
+      currentLocationMarker = null;
+    }
+  }
+
+  currentLocationMarker = L.marker([lat, lng], { title: 'You are here' }).addTo(map).bindPopup('Your location');
+  addProviderMarkers();
+}
+
+function addProviderMarkers() {
+  if (!map || !allProviders || allProviders.length === 0) return;
+  allProviders.forEach(p => {
+    if (p.latitude && p.longitude) {
+      const marker = L.marker([p.latitude, p.longitude]).addTo(map);
+      marker.bindPopup(`<strong>${p.name}</strong><br>${p.category_name}<br>₹${p.hourly_rate}/hr`);
+      providerMarkers.push(marker);
+    }
+  });
+}
+
+function initMap() {
+  if (!navigator.geolocation) {
+    showMapMessage('Geolocation not supported');
+    return;
+  }
+
+  showMapMessage('Getting your location...');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      currentLat = pos.coords.latitude;
+      currentLng = pos.coords.longitude;
+      renderMap(currentLat, currentLng);
+    },
+    () => {
+      showMapMessage('Location access denied');
+    }
+  );
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavUser();
+  await loadCatFilters();
+  
+  // Check URL params
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('category')) setCategory(p.get('category'));
+  if (p.get('search')) document.getElementById('search-input').value = p.get('search');
+  
+  await loadProviders();
+});
+
+async function loadCatFilters() {
+  const res = await Api.categories();
+  if (!res.success) return;
+  const el = document.getElementById('cat-filters');
+  el.innerHTML = res.categories.map(c => `
+    <div class="cat-filter-item" data-cat="${c.id}" onclick="setCategory('${c.id}')">
+      <span>${c.icon}</span> ${c.name}
+    </div>`).join('');
+}
+
+function setCategory(id) {
+  document.querySelectorAll('.cat-filter-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.cat === id);
+  });
+  loadProviders();
+}
+
+function getActiveCategory() {
+  const active = document.querySelector('.cat-filter-item.active');
+  return active ? active.dataset.cat : '';
+}
+
+async function loadProviders() {
+  const params = {
+    search: document.getElementById('search-input').value,
+    available_only: document.getElementById('available-toggle').checked,
+    min_rating: document.querySelector('input[name="rating"]:checked')?.value || '',
+    category_id: getActiveCategory(),
+  };
+  if (currentLat) { params.lat = currentLat; params.lng = currentLng; }
+  
+  const grid = document.getElementById('providers-grid');
+  grid.innerHTML = Array(4).fill(`<div style="height:280px;border-radius:var(--radius-xl);" class="skeleton"></div>`).join('');
+  
+  const res = await Api.providers(params);
+  
+  if (!res.success) {
+    grid.innerHTML = `<div style="grid-column:1/-1;"><div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Backend not connected</div><p>Start the Node.js server to load providers from the database.</p></div></div>`;
+    document.getElementById('results-count').textContent = '';
+    return;
+  }
+  
+  allProviders = res.providers;
+  sortProviders();
+  if (map) addProviderMarkers();
+}
+
+function sortProviders() {
+  const sort = document.getElementById('sort-select').value;
+  const sorted = [...allProviders];
+  if (sort === 'trust') sorted.sort((a,b) => b.trust_score - a.trust_score);
+  else if (sort === 'rating') sorted.sort((a,b) => b.avg_rating - a.avg_rating);
+  else if (sort === 'jobs') sorted.sort((a,b) => b.completed_jobs - a.completed_jobs);
+  else if (sort === 'rate_low') sorted.sort((a,b) => a.hourly_rate - b.hourly_rate);
+  else if (sort === 'rate_high') sorted.sort((a,b) => b.hourly_rate - a.hourly_rate);
+  allProviders = sorted;
+  displayedCount = 0;
+  renderProviders();
+}
+
+function renderProviders() {
+  const grid = document.getElementById('providers-grid');
+  const slice = allProviders.slice(0, displayedCount + PAGE_SIZE);
+  
+  document.getElementById('results-count').textContent = `${allProviders.length} providers found`;
+  
+  if (allProviders.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;"><div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-title">No providers found</div><p>Try adjusting your filters or search terms.</p></div></div>`;
+    return;
+  }
+  
+  grid.innerHTML = slice.map(p => providerCardHTML(p)).join('');
+  displayedCount = slice.length;
+  document.getElementById('load-more-wrap').style.display = displayedCount < allProviders.length ? 'block' : 'none';
+}
+
+function loadMore() {
+  const slice = allProviders.slice(0, displayedCount + PAGE_SIZE);
+  document.getElementById('providers-grid').innerHTML = slice.map(p => providerCardHTML(p)).join('');
+  displayedCount = slice.length;
+  document.getElementById('load-more-wrap').style.display = displayedCount < allProviders.length ? 'block' : 'none';
+}
+
+function providerCardHTML(p) {
+  const initials = p.name ? p.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '??';
+  return `
+    <div class="provider-card" onclick="window.location='/pages/provider-detail.html?id=${p.id}'">
+      <div class="provider-card-header">
+        <div class="provider-avatar-large">${initials}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.95rem;">${p.name}</div>
+          <div style="font-size:0.8rem;color:var(--ink-3);">${p.category_icon} ${p.category_name}</div>
+          <div style="display:flex;align-items:center;gap:0.4rem;margin-top:0.3rem;">
+            <span class="stars" style="font-size:0.78rem;">${Format.stars(p.avg_rating)}</span>
+            <span style="font-size:0.8rem;font-weight:600;">${parseFloat(p.avg_rating||0).toFixed(1)}</span>
+          </div>
+        </div>
+        <span class="trust-badge" style="font-size:0.72rem;">🛡️ ${parseFloat(p.trust_score).toFixed(1)}</span>
+      </div>
+      <div class="provider-card-body">
+        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;">
+          <span class="availability-dot ${p.is_available?'available':'busy'}"></span>
+          <span style="font-size:0.78rem;color:var(--ink-3);">${p.is_available?'Available':'Busy'}</span>
+          ${p.distance_km ? `<span style="font-size:0.75rem;color:var(--ink-4);">📍 ${p.distance_km} km</span>` : ''}
+          <span style="margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--primary);">₹${p.hourly_rate||0}/hr</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--ink-3);line-height:1.55;margin:0;">${(p.bio||'').substring(0,80)}${p.bio&&p.bio.length>80?'...':''}</p>
+        <div class="provider-stats">
+          <div class="provider-stat"><div class="provider-stat-val">${p.completed_jobs||0}</div><div class="provider-stat-label">Jobs</div></div>
+          <div class="provider-stat"><div class="provider-stat-val">${p.experience_years||0}y</div><div class="provider-stat-label">Exp.</div></div>
+          <div class="provider-stat"><div class="provider-stat-val">${p.review_count||0}</div><div class="provider-stat-label">Reviews</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function getNearby() {
+  if (!navigator.geolocation) { document.getElementById('location-status').textContent = 'Geolocation not supported.'; return; }
+  document.getElementById('location-status').textContent = 'Getting location...';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      currentLat = pos.coords.latitude; currentLng = pos.coords.longitude;
+      document.getElementById('location-status').textContent = `📍 Location found! Showing nearby providers.`;
+      loadProviders();
+      renderMap(currentLat, currentLng);
+    },
+    () => { document.getElementById('location-status').textContent = 'Location access denied.'; }
+  );
+}
+
+function initMap() {
+  if (navigator.geolocation) {
+    showMapMessage('Getting your location...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        currentLat = pos.coords.latitude;
+        currentLng = pos.coords.longitude;
+        renderMap(currentLat, currentLng);
+      },
+      () => {
+        showMapMessage('Location access denied');
+      }
+    );
+  } else {
+    showMapMessage('Geolocation not supported');
+  }
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') loadProviders(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login – NeighborLink</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+.auth-visual { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1a56db 100%); padding: 3rem; display: flex; flex-direction: column; justify-content: center; color: white; position: relative; overflow: hidden; }
+.auth-visual::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.auth-form-wrap { padding: 3rem; display: flex; flex-direction: column; justify-content: center; max-width: 480px; margin: 0 auto; width: 100%; }
+.auth-testimonials { margin-top: 3rem; }
+.auth-testimonial { background: rgba(255,255,255,0.08); border-radius: var(--radius-lg); padding: 1.5rem; margin-top: 1rem; }
+@media (max-width: 768px) { .auth-page { grid-template-columns: 1fr; } .auth-visual { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="auth-page">
+  <!-- Visual side -->
+  <div class="auth-visual">
+    <div style="position:relative;z-index:1;">
+      <a href="/" class="nav-logo" style="color:white;font-size:1.5rem;margin-bottom:3rem;display:block;">Neighbor<span style="color:var(--accent);">Link</span></a>
+      <h2 style="color:white;font-size:2.2rem;margin-bottom:1rem;letter-spacing:-0.03em;">Welcome back to NeighborLink</h2>
+      <p style="color:rgba(255,255,255,0.65);font-size:1rem;line-height:1.7;max-width:380px;">Connect with trusted local professionals. Book services with confidence using our verified trust score system.</p>
+      <div class="auth-testimonials">
+        <div class="auth-testimonial">
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(249,115,22,0.3);display:flex;align-items:center;justify-content:center;font-weight:700;">A</div>
+            <div><div style="font-weight:600;font-size:0.9rem;">Arjun Kumar</div><div style="font-size:0.78rem;color:rgba(255,255,255,0.5);">Vellore, TN</div></div>
+            <div style="margin-left:auto;color:#f59e0b;">★★★★★</div>
+          </div>
+          <p style="font-size:0.85rem;color:rgba(255,255,255,0.65);margin:0;">"Found a brilliant electrician in minutes. The trust score gave me real confidence in my choice."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form side -->
+  <div class="auth-form-wrap">
+    <div style="margin-bottom:2rem;">
+      <h3 style="font-size:1.75rem;font-weight:800;letter-spacing:-0.025em;">Sign in to your account</h3>
+      <p style="color:var(--ink-3);margin-top:0.4rem;">Don't have an account? <a href="/pages/register.html" style="color:var(--primary);font-weight:600;">Register here</a></p>
+    </div>
+
+    <div id="demo-info" style="background:var(--primary-light);border:1px solid rgba(26,86,219,0.2);border-radius:var(--radius);padding:1rem;margin-bottom:1.5rem;">
+      <div style="font-weight:700;font-size:0.85rem;color:var(--primary);margin-bottom:0.5rem;">🔑 Demo Accounts (password: <code>password123</code>)</div>
+      <div style="font-size:0.82rem;display:flex;flex-direction:column;gap:0.25rem;">
+        <span>👤 User: <strong>arjun@demo.com</strong> <button onclick="fillDemo('arjun@demo.com')" class="btn btn-sm btn-primary" style="padding:0.2rem 0.6rem;font-size:0.75rem;margin-left:0.5rem;">Use</button></span>
+        <span>🔧 Provider: <strong>ramesh@demo.com</strong> <button onclick="fillDemo('ramesh@demo.com')" class="btn btn-sm btn-outline" style="padding:0.2rem 0.6rem;font-size:0.75rem;margin-left:0.5rem;">Use</button></span>
+      </div>
+    </div>
+
+    <div id="error-msg" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:var(--radius);padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.88rem;color:var(--danger);"></div>
+
+    <form id="login-form" style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div style="position:relative;">
+          <input type="password" id="password" class="form-control" placeholder="Enter your password" required style="padding-right:3rem;" />
+          <button type="button" onclick="togglePw()" style="position:absolute;right:0.85rem;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--ink-3);">👁️</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">Sign In</button>
+    </form>
+
+    <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border);text-align:center;">
+      <p style="font-size:0.85rem;color:var(--ink-3);">Want to offer your services? <a href="/pages/register.html?role=provider" style="color:var(--primary);font-weight:600;">Register as a Provider →</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+// Redirect if already logged in
+if (Api.isLoggedIn()) {
+  const user = Api.getUser();
+  window.location.href = user.role === 'provider' ? '/pages/provider-dashboard.html' : '/pages/dashboard.html';
+}
+
+function fillDemo(email) {
+  document.getElementById('email').value = email;
+  document.getElementById('password').value = 'password123';
+}
+
+function togglePw() {
+  const pw = document.getElementById('password');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const errEl = document.getElementById('error-msg');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  const res = await Api.login({ email, password });
+  
+  if (res.success) {
+    Api.setAuth(res.token, res.user);
+    Toast.success(`Welcome back, ${res.user.name}!`);
+    setTimeout(() => {
+      window.location.href = res.user.role === 'provider' ? '/pages/provider-dashboard.html' : '/pages/dashboard.html';
+    }, 600);
+  } else {
+    errEl.style.display = 'block';
+    errEl.textContent = res.message || 'Login failed. Please check your credentials.';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+});
+</script>
+</body>
+</html>

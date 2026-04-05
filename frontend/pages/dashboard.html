@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – NeighborLink</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="/" class="nav-logo">Neighbor<span class="dot">Link</span></a>
+    <div class="nav-links">
+      <a href="/pages/services.html" class="nav-link">Find Services</a>
+    </div>
+    <div class="nav-actions" id="nav-actions"></div>
+  </div>
+</nav>
+
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div style="padding:0.75rem;margin-bottom:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="nav-avatar" style="width:44px;height:44px;font-size:1rem;" id="sidebar-avatar">?</div>
+        <div><div style="font-weight:700;font-size:0.92rem;" id="sidebar-name">Loading...</div><div style="font-size:0.75rem;color:var(--ink-3);">Customer</div></div>
+      </div>
+    </div>
+    <div class="divider" style="margin:0.75rem 0;"></div>
+    <span class="sidebar-section-label">Menu</span>
+    <a class="sidebar-link active" href="#" onclick="showSection('overview')"><span class="icon">🏠</span> Overview</a>
+    <a class="sidebar-link" href="#" onclick="showSection('bookings')"><span class="icon">📅</span> My Bookings</a>
+    <a class="sidebar-link" href="/pages/services.html"><span class="icon">🔍</span> Find Services</a>
+    <a class="sidebar-link" href="#" onclick="showSection('notifications')"><span class="icon">🔔</span> Notifications</a>
+    <div class="divider" style="margin:0.5rem 0;"></div>
+    <a class="sidebar-link" href="#" onclick="logout()" style="color:var(--danger);"><span class="icon">🚪</span> Logout</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Overview Section -->
+    <div id="section-overview">
+      <div class="page-header">
+        <div class="page-header-title" id="welcome-msg">Welcome back! 👋</div>
+        <div class="page-header-sub">Here's a summary of your activity</div>
+      </div>
+      <div class="grid-4" style="margin-bottom:2rem;" id="stats-row">
+        <div class="stat-card"><div class="stat-card-icon" style="background:#dbeafe;">📅</div><div class="stat-card-value" id="stat-total">0</div><div class="stat-card-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#dcfce7;">✅</div><div class="stat-card-value" id="stat-completed">0</div><div class="stat-card-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#fef3c7;">⏳</div><div class="stat-card-value" id="stat-pending">0</div><div class="stat-card-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-card-icon" style="background:#ede9fe;">⭐</div><div class="stat-card-value" id="stat-reviews">0</div><div class="stat-card-label">Reviews Left</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;">
+            Recent Bookings <a href="#" onclick="showSection('bookings')" style="font-size:0.82rem;font-weight:600;color:var(--primary);">View All →</a>
+          </div>
+          <div id="recent-bookings-list">
+            <div style="text-align:center;padding:2rem;color:var(--ink-3);font-size:0.88rem;">Loading...</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:1.25rem;">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <a href="/pages/services.html" class="btn btn-primary">🔍 Find a Service Provider</a>
+            <a href="#" onclick="showSection('bookings')" class="btn btn-outline">📋 View All Bookings</a>
+            <a href="/pages/services.html?available_only=true" class="btn btn-ghost">⚡ Available Right Now</a>
+          </div>
+          <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+            <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.75rem;">Popular Services</div>
+            <div id="quick-cats" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookings Section -->
+    <div id="section-bookings" style="display:none;">
+      <div class="page-header">
+        <div class="page-header-title">My Bookings</div>
+        <div class="page-header-sub">All your service bookings in one place</div>
+      </div>
+      <div style="margin-bottom:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;" id="booking-filter-tabs">
+        <button class="filter-chip active" onclick="filterBookings('all', this)">All</button>
+        <button class="filter-chip" onclick="filterBookings('pending', this)">⏳ Pending</button>
+        <button class="filter-chip" onclick="filterBookings('accepted', this)">✅ Accepted</button>
+        <button class="filter-chip" onclick="filterBookings('completed', this)">🎉 Completed</button>
+        <button class="filter-chip" onclick="filterBookings('rejected', this)">❌ Rejected</button>
+      </div>
+      <div class="table-wrap">
+        <table id="bookings-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Service</th><th>Provider</th><th>Date & Time</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-3);">Loading bookings...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div id="section-notifications" style="display:none;">
+      <div class="page-header">
+        <div class="page-header-title">Notifications</div>
+      </div>
+      <div id="notifications-list" style="display:flex;flex-direction:column;gap:0.75rem;max-width:640px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Leave a Review</h3>
+      <button class="modal-close" onclick="document.getElementById('review-modal').classList.remove('open')">✕</button>
+    </div>
+    <form id="review-form" style="display:flex;flex-direction:column;gap:1.1rem;">
+      <input type="hidden" id="review-booking-id" />
+      <div class="form-group">
+        <label class="form-label">Overall Rating *</label>
+        <div style="display:flex;gap:0.5rem;" id="star-rating">
+          ${[1,2,3,4,5].map(n => `<button type="button" class="star-btn" data-val="${n}" onclick="setRating(${n})" style="font-size:1.8rem;color:#d1d5db;cursor:pointer;background:none;border:none;transition:color 0.1s;">★</button>`).join('')}
+        </div>
+        <input type="hidden" id="r-rating" value="0" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Quality</label><select id="r-quality" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Punctuality</label><select id="r-punct" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Communication</label><select id="r-comm" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Review</label>
+        <textarea id="r-text" class="form-control" placeholder="Share your experience with this provider..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg">Submit Review</button>
+    </form>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let allBookings = [];
+if (!requireAuth('user')) {}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = Api.getUser();
+  document.getElementById('sidebar-name').textContent = user.name;
+  document.getElementById('sidebar-avatar').textContent = user.name[0].toUpperCase();
+  document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name.split(' ')[0]}! 👋`;
+  renderNavUser();
+  await loadBookings();
+  await loadCategories();
+  await loadNotifications();
+});
+
+async function loadBookings() {
+  const res = await Api.myBookings();
+  if (!res.success) return;
+  allBookings = res.bookings;
+  
+  // Stats
+  document.getElementById('stat-total').textContent = allBookings.length;
+  document.getElementById('stat-completed').textContent = allBookings.filter(b => b.status === 'completed').length;
+  document.getElementById('stat-pending').textContent = allBookings.filter(b => b.status === 'pending').length;
+  document.getElementById('stat-reviews').textContent = allBookings.filter(b => b.status === 'completed').length;
+  
+  renderRecentBookings();
+  renderBookingsTable(allBookings);
+}
+
+function renderRecentBookings() {
+  const el = document.getElementById('recent-bookings-list');
+  const recent = allBookings.slice(0, 4);
+  if (recent.length === 0) { el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--ink-3);font-size:0.88rem;">No bookings yet. <a href="/pages/services.html" style="color:var(--primary);font-weight:600;">Book your first service →</a></div>'; return; }
+  el.innerHTML = recent.map(b => `
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:1.4rem;">${b.service_icon||'🔧'}</div>
+      <div style="flex:1;"><div style="font-weight:600;font-size:0.88rem;">${b.service_name}</div><div style="font-size:0.78rem;color:var(--ink-3);">${b.provider_name} · ${Format.date(b.scheduled_date)}</div></div>
+      ${Format.statusBadge(b.status)}
+    </div>`).join('');
+}
+
+function renderBookingsTable(bookings) {
+  const tbody = document.getElementById('bookings-tbody');
+  if (bookings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--ink-3);">No bookings found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td style="font-weight:600;color:var(--ink-3);">#${b.id}</td>
+      <td><div style="display:flex;align-items:center;gap:0.5rem;"><span>${b.service_icon||'🔧'}</span><span style="font-weight:600;">${b.service_name}</span></div></td>
+      <td>${b.provider_name}<div style="font-size:0.75rem;color:var(--ink-4);">${b.provider_phone||''}</div></td>
+      <td><div style="font-size:0.88rem;">${Format.date(b.scheduled_date)}</div><div style="font-size:0.75rem;color:var(--ink-3);">${Format.time(b.scheduled_time)}</div></td>
+      <td>${Format.statusBadge(b.status)}</td>
+      <td>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          ${b.status === 'completed' ? `<button class="btn btn-sm" style="background:#ede9fe;color:#6d28d9;" onclick="openReview(${b.id})">⭐ Review</button>` : ''}
+          ${b.status === 'pending' ? `<button class="btn btn-sm btn-danger" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="viewBooking(${b.id})">Details</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterBookings(status, btn) {
+  document.querySelectorAll('#booking-filter-tabs .filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status === 'all' ? allBookings : allBookings.filter(b => b.status === status);
+  renderBookingsTable(filtered);
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Cancel this booking?')) return;
+  const res = await Api.updateBookingStatus(id, 'cancelled');
+  if (res.success) { Toast.success('Booking cancelled.'); await loadBookings(); }
+  else Toast.error(res.message);
+}
+
+function viewBooking(id) {
+  window.location.href = `/pages/booking-confirmation.html?id=${id}`;
+}
+
+async function loadCategories() {
+  const res = await Api.categories();
+  if (!res.success) return;
+  const el = document.getElementById('quick-cats');
+  el.innerHTML = res.categories.slice(0,6).map(c => `
+    <a href="/pages/services.html?category=${c.id}" class="filter-chip" style="text-decoration:none;">${c.icon} ${c.name}</a>`).join('');
+}
+
+async function loadNotifications() {
+  const res = await Api.notifications();
+  if (!res.success) return;
+  const el = document.getElementById('notifications-list');
+  if (res.notifications.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔔</div><div class="empty-state-title">No notifications</div></div>';
+    return;
+  }
+  el.innerHTML = res.notifications.map(n => `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;display:flex;gap:0.75rem;align-items:flex-start;">
+      <div style="font-size:1.2rem;">${n.type === 'booking' ? '📅' : '🔔'}</div>
+      <div><div style="font-weight:600;font-size:0.9rem;">${n.title}</div><div style="font-size:0.82rem;color:var(--ink-3);margin-top:0.2rem;">${n.message}</div><div style="font-size:0.75rem;color:var(--ink-4);margin-top:0.35rem;">${Format.date(n.created_at)}</div></div>
+    </div>`).join('');
+}
+
+function showSection(name) {
+  ['overview','bookings','notifications'].forEach(s => {
+    document.getElementById(`section-${s}`).style.display = s === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Rating stars
+function setRating(val) {
+  document.getElementById('r-rating').value = val;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.style.color = i < val ? '#f59e0b' : '#d1d5db';
+  });
+}
+
+function openReview(bookingId) {
+  document.getElementById('review-booking-id').value = bookingId;
+  setRating(5);
+  document.getElementById('review-modal').classList.add('open');
+}
+
+document.getElementById('review-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  const rating = parseInt(document.getElementById('r-rating').value);
+  if (!rating) { Toast.error('Please select a rating'); btn.disabled = false; btn.textContent = 'Submit Review'; return; }
+  
+  const res = await Api.submitReview(document.getElementById('review-booking-id').value, {
+    rating,
+    quality_rating: parseInt(document.getElementById('r-quality').value),
+    punctuality_rating: parseInt(document.getElementById('r-punct').value),
+    communication_rating: parseInt(document.getElementById('r-comm').value),
+    review_text: document.getElementById('r-text').value,
+  });
+  
+  if (res.success) {
+    Toast.success('Review submitted! Thank you.');
+    document.getElementById('review-modal').classList.remove('open');
+  } else Toast.error(res.message);
+  btn.disabled = false; btn.textContent = 'Submit Review';
+});
+</script>
+</body>
+</html>

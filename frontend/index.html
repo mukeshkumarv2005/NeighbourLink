@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeighborLink – Smart Local Service Discovery</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+/* ── HERO ── */
+.hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1a56db 100%); color: white; padding: 6rem 0 5rem; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.hero-inner { position: relative; z-index: 1; text-align: center; max-width: 760px; margin: 0 auto; }
+.hero h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 800; margin-bottom: 1.25rem; letter-spacing: -0.04em; }
+.hero h1 span { color: #f97316; }
+.hero p { font-size: 1.15rem; color: rgba(255,255,255,0.75); margin-bottom: 2.5rem; }
+.hero-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 3rem; flex-wrap: wrap; }
+.hero-stat { text-align: center; }
+.hero-stat-num { font-size: 2rem; font-weight: 800; color: white; }
+.hero-stat-label { font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem; }
+
+/* ── CATEGORIES ── */
+.categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; }
+@media (max-width: 900px) { .categories-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .categories-grid { grid-template-columns: repeat(2, 1fr); } }
+.category-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-xl); padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; text-decoration: none; color: var(--ink); }
+.category-card:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+.category-icon { font-size: 2.8rem; margin-bottom: 0.85rem; display: block; }
+.category-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+.category-sub { font-size: 0.8rem; color: var(--ink-3); }
+
+/* ── HOW ── */
+.how-section { background: var(--ink); color: white; }
+.how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 3rem; }
+@media (max-width: 768px) { .how-grid { grid-template-columns: repeat(2, 1fr); } }
+.how-step { text-align: center; }
+.how-step-num { width: 52px; height: 52px; border-radius: 50%; background: rgba(249,115,22,0.15); border: 2px solid rgba(249,115,22,0.4); color: var(--accent); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; }
+.how-step-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+.how-step h4 { font-weight: 700; margin-bottom: 0.5rem; color: white; }
+.how-step p { font-size: 0.85rem; color: rgba(255,255,255,0.55); line-height: 1.65; }
+
+/* ── PROVIDERS SECTION ── */
+.providers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+@media (max-width: 900px) { .providers-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .providers-grid { grid-template-columns: 1fr; } }
+
+/* ── TRUST SECTION ── */
+.trust-section-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+@media (max-width: 768px) { .trust-section-inner { grid-template-columns: 1fr; gap: 3rem; } }
+.trust-card-visual { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 2rem; box-shadow: var(--shadow-lg); }
+.trust-meter { display: grid; grid-template-columns: 1fr 3fr 2.5rem; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+.trust-meter-label { font-size: 0.82rem; color: var(--ink-2); }
+.trust-meter-val { font-size: 0.82rem; font-weight: 700; text-align: right; }
+
+/* ── CTA SECTION ── */
+.cta-section { background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; border-radius: var(--radius-xl); padding: 4rem; text-align: center; margin: 0 1rem; }
+.cta-section h2 { color: white; margin-bottom: 1rem; }
+.cta-section p { color: rgba(255,255,255,0.8); margin-bottom: 2rem; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="/" class="nav-logo">Neighbor<span class="dot">Link</span></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/pages/services.html" class="nav-link">Services</a>
+      <a href="/pages/login.html" class="nav-link" id="nav-login-link">Login</a>
+    </div>
+    <div class="nav-actions" id="nav-actions">
+      <a href="/pages/login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="/pages/register.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="badge badge-primary" style="margin: 0 auto 1.5rem; display: inline-flex;">🔒 Trusted by 10,000+ users across India</div>
+      <h1>Find trusted local services <span>near you</span></h1>
+      <p>Book verified electricians, plumbers, carpenters & more — ranked by trust score, not ads.</p>
+      <div class="hero-search-wrap" style="max-width: 660px; margin: 0 auto;">
+        <span style="padding-left: 0.75rem; font-size: 1.2rem;">🔍</span>
+        <input type="text" class="hero-search-input" id="hero-search" placeholder="What service do you need?" />
+        <div class="hero-search-divider"></div>
+        <select class="hero-search-select" id="hero-category">
+          <option value="">All Services</option>
+        </select>
+        <button class="btn btn-accent" onclick="searchServices()">Search</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-num">10K+</div><div class="hero-stat-label">Registered Providers</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">50K+</div><div class="hero-stat-label">Bookings Completed</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">4.8★</div><div class="hero-stat-label">Average Rating</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">98%</div><div class="hero-stat-label">Match Success Rate</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 3rem;">
+      <div class="section-label">Browse by Category</div>
+      <h2 class="section-title">Popular Services</h2>
+      <p class="section-sub" style="margin: 0 auto;">Find professionals in every home service category</p>
+    </div>
+    <div class="categories-grid" id="categories-grid">
+      <!-- Loaded dynamically -->
+      <div class="category-card"><span class="category-icon skeleton" style="width:50px;height:50px;display:block;margin:0 auto 0.85rem;"></span><div class="skeleton" style="height:18px;width:80px;margin:0 auto 0.3rem;"></div><div class="skeleton" style="height:14px;width:100px;margin:0 auto;"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOP PROVIDERS -->
+<section class="section" style="background: var(--surface-2); padding-top: 4rem;">
+  <div class="container">
+    <div class="flex-between" style="margin-bottom: 2rem;">
+      <div>
+        <div class="section-label">Top Rated</div>
+        <h2 class="section-title" style="margin-bottom:0.25rem;">Featured Providers</h2>
+        <p style="color:var(--ink-3); font-size:0.9rem;">Highest trust scores in your area</p>
+      </div>
+      <a href="/pages/services.html" class="btn btn-outline">View All →</a>
+    </div>
+    <div class="providers-grid" id="featured-providers">
+      <!-- loaded dynamically -->
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section how-section">
+  <div class="container">
+    <div style="text-align:center;">
+      <div class="section-label" style="color:var(--accent);">Simple Process</div>
+      <h2 class="section-title" style="color:white; margin-bottom:0.5rem;">How NeighborLink Works</h2>
+      <p style="color:rgba(255,255,255,0.6); max-width:500px; margin:0 auto;">From need to completion in 4 easy steps</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-step"><div class="how-step-num">1</div><div class="how-step-icon">🔍</div><h4>Search</h4><p>Enter your service need and location to find nearby verified professionals</p></div>
+      <div class="how-step"><div class="how-step-num">2</div><div class="how-step-icon">👤</div><h4>Choose</h4><p>Compare providers by trust score, rating, experience and pricing</p></div>
+      <div class="how-step"><div class="how-step-num">3</div><div class="how-step-icon">📅</div><h4>Book</h4><p>Select your preferred date and time. Get instant confirmation</p></div>
+      <div class="how-step"><div class="how-step-num">4</div><div class="how-step-icon">⭐</div><h4>Review</h4><p>Rate your experience to help build the trust ecosystem</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST SECTION -->
+<section class="section">
+  <div class="container">
+    <div class="trust-section-inner">
+      <div>
+        <div class="section-label">Our Advantage</div>
+        <h2 class="section-title">Trust isn't assumed — it's calculated</h2>
+        <p style="margin-bottom:1.5rem;">Every provider gets a composite Trust Score based on four key factors. No fake reviews. No paid rankings.</p>
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="flex gap-2 align-items-center"><span style="font-size:1.4rem;">⭐</span><div><strong>Service Quality (40%)</strong><p style="font-size:0.85rem;margin:0;color:var(--ink-3);">Based on verified user reviews after each completed job</p></div></div>
+          <div class="flex gap-2"><span style="font-size:1.4rem;">✅</span><div><strong>Completion Rate (30%)</strong><p style="font-size:0.85rem;margin:0;color:var(--ink-3);">Percentage of accepted bookings successfully completed</p></div></div>
+          <div class="flex gap-2"><span style="font-size:1.4rem;">⚡</span><div><strong>Response Time (20%)</strong><p style="font-size:0.85rem;margin:0;color:var(--ink-3);">How quickly providers respond to booking requests</p></div></div>
+          <div class="flex gap-2"><span style="font-size:1.4rem;">🔎</span><div><strong>Review Authenticity (10%)</strong><p style="font-size:0.85rem;margin:0;color:var(--ink-3);">Only verified bookings can leave reviews</p></div></div>
+        </div>
+      </div>
+      <div class="trust-card-visual">
+        <div style="font-weight:700; margin-bottom:1.5rem; font-size:1.05rem;">Sample Trust Breakdown</div>
+        <div class="trust-meter"><span class="trust-meter-label">Quality</span><div class="progress-bar"><div class="progress-fill" style="width:92%"></div></div><span class="trust-meter-val">9.2</span></div>
+        <div class="trust-meter"><span class="trust-meter-label">Completion</span><div class="progress-bar"><div class="progress-fill" style="width:97%"></div></div><span class="trust-meter-val">9.7</span></div>
+        <div class="trust-meter"><span class="trust-meter-label">Response</span><div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div><span class="trust-meter-val">8.8</span></div>
+        <div class="trust-meter"><span class="trust-meter-label">Authentic</span><div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div><span class="trust-meter-val">10</span></div>
+        <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:1rem;">
+          <div class="trust-score-large">9.2</div>
+          <div><div style="font-weight:700; font-size:1rem;">Overall Trust Score</div><div style="font-size:0.82rem;color:var(--ink-3);">Top 5% of all providers</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section-sm">
+  <div class="container">
+    <div class="cta-section">
+      <h2>Ready to find trusted help near you?</h2>
+      <p>Join thousands of users who book local services with confidence every day.</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="/pages/register.html" class="btn btn-white btn-lg">Get Started Free</a>
+        <a href="/pages/services.html" class="btn btn-lg" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.3);">Browse Services</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:var(--ink);color:white;padding:3rem 0 2rem;">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:2rem;">
+      <div>
+        <div class="nav-logo" style="color:white;margin-bottom:1rem;">Neighbor<span style="color:var(--accent);">Link</span></div>
+        <p style="font-size:0.85rem;color:rgba(255,255,255,0.5);max-width:280px;line-height:1.7;">Smart local service discovery and trust-based booking platform for reliable professionals.</p>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:1rem;font-size:0.9rem;">Services</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <a href="/pages/services.html" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Browse All</a>
+          <a href="#" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Electricians</a>
+          <a href="#" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Plumbers</a>
+          <a href="#" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Cleaners</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:1rem;font-size:0.9rem;">Platform</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <a href="/pages/register.html" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Join as Provider</a>
+          <a href="/pages/login.html" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">Login</a>
+          <a href="#" style="font-size:0.85rem;color:rgba(255,255,255,0.5);">About Trust Score</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:1rem;font-size:0.9rem;">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.85rem;color:rgba(255,255,255,0.5);">
+          <span>📧 hello@neighborlink.in</span>
+          <span>📞 1800-123-4567</span>
+          <span>📍 Vellore, Tamil Nadu</span>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+      <p style="font-size:0.82rem;color:rgba(255,255,255,0.4);">© 2025 NeighborLink. All rights reserved.</p>
+      <p style="font-size:0.82rem;color:rgba(255,255,255,0.4);">Smart Local Service Discovery & Trust-Based Booking System</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavUser();
+  await loadCategories();
+  await loadFeaturedProviders();
+});
+
+async function loadCategories() {
+  const grid = document.getElementById('categories-grid');
+  const res = await Api.categories();
+  if (!res.success) return;
+  
+  const icons_desc = {
+    'Electrician': 'Wiring, repairs, installation',
+    'Plumber': 'Pipes, drainage, fixtures',
+    'Carpenter': 'Furniture, woodwork, fitting',
+    'Cleaner': 'Deep clean, regular upkeep',
+    'Painter': 'Interior & exterior painting',
+    'AC Repair': 'Service, repair, installation',
+    'Appliance Repair': 'Fridge, washer, TV repair',
+    'Security': 'CCTV, locks, alarms',
+  };
+  
+  grid.innerHTML = res.categories.map(c => `
+    <a href="/pages/services.html?category=${c.id}" class="category-card">
+      <span class="category-icon">${c.icon}</span>
+      <div class="category-name">${c.name}</div>
+      <div class="category-sub">${icons_desc[c.name] || c.description || ''}</div>
+    </a>
+  `).join('');
+  
+  // Populate hero search select
+  const sel = document.getElementById('hero-category');
+  res.categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = `${c.icon} ${c.name}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadFeaturedProviders() {
+  const grid = document.getElementById('featured-providers');
+  const res = await Api.providers({ available_only: false });
+  if (!res.success) { grid.innerHTML = '<p style="color:var(--ink-3)">Could not load providers. Make sure the backend is running.</p>'; return; }
+  
+  const top = res.providers.slice(0, 6);
+  if (top.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🔍</div><div class="empty-state-title">No providers yet</div><p>Providers will appear once the database is seeded.</p></div>';
+    return;
+  }
+  
+  grid.innerHTML = top.map(p => providerCardHTML(p)).join('');
+}
+
+function providerCardHTML(p) {
+  const initials = p.name ? p.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase() : '??';
+  return `
+    <div class="provider-card" onclick="window.location='/pages/provider-detail.html?id=${p.id}'">
+      <div class="provider-card-header">
+        <div class="provider-avatar-large">${initials}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:1rem;">${p.name}</div>
+          <div style="font-size:0.82rem;color:var(--ink-3);margin-top:0.15rem;">${p.category_icon} ${p.category_name}</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;">
+            <span class="stars">${Format.stars(p.avg_rating)}</span>
+            <span class="rating-num">${parseFloat(p.avg_rating||0).toFixed(1)}</span>
+            <span style="font-size:0.75rem;color:var(--ink-4);">(${p.review_count||0})</span>
+          </div>
+        </div>
+        <div><span class="trust-badge">🛡️ ${parseFloat(p.trust_score).toFixed(1)}</span></div>
+      </div>
+      <div class="provider-card-body">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <span class="availability-dot ${p.is_available ? 'available' : 'busy'}"></span>
+          <span style="font-size:0.82rem;color:var(--ink-3);">${p.is_available ? 'Available Now' : 'Currently Busy'}</span>
+          ${p.distance_km ? `<span style="margin-left:auto;font-size:0.78rem;color:var(--ink-4);">📍 ${p.distance_km} km</span>` : ''}
+        </div>
+        <p style="font-size:0.85rem;color:var(--ink-3);line-height:1.6;margin-bottom:0;">${(p.bio||'').substring(0,90)}${p.bio && p.bio.length>90?'...':''}</p>
+        <div class="provider-stats">
+          <div class="provider-stat"><div class="provider-stat-val">${p.completed_jobs||0}</div><div class="provider-stat-label">Jobs Done</div></div>
+          <div class="provider-stat"><div class="provider-stat-val">${p.experience_years||0}y</div><div class="provider-stat-label">Experience</div></div>
+          <div class="provider-stat"><div class="provider-stat-val">₹${p.hourly_rate||0}</div><div class="provider-stat-label">Per Hour</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function searchServices() {
+  const q = document.getElementById('hero-search').value;
+  const cat = document.getElementById('hero-category').value;
+  let url = '/pages/services.html?';
+  if (q) url += `search=${encodeURIComponent(q)}&`;
+  if (cat) url += `category=${cat}`;
+  window.location.href = url;
+}
+
+document.getElementById('hero-search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchServices();
+});
+</script>
+</body>
+</html>

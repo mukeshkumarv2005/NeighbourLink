@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Service – NeighborLink</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .booking-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start; }
+    .provider-summary {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;
+      position: sticky; top: 86px;
+    }
+    .provider-avatar { width: 72px; height: 72px; border-radius: 18px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 1rem; }
+    .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .time-chip { padding: 0.55rem; border: 1.5px solid var(--border); border-radius: var(--radius); text-align: center; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .time-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .time-chip.selected { border-color: var(--primary); background: var(--primary); color: white; }
+
+    /* Confirmation screen */
+    .confirmation {
+      display: none; text-align: center; padding: 3rem 2rem;
+    }
+    .confirmation.visible { display: block; }
+    .confirmation-icon { font-size: 4rem; margin-bottom: 1rem; animation: bounceIn 0.6s ease; }
+    @keyframes bounceIn { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .confirmation h2 { font-family: var(--font-display); font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .booking-ref {
+      display: inline-block; background: var(--primary-light); color: var(--primary);
+      font-family: var(--font-display); font-size: 1.4rem; font-weight: 800;
+      padding: 0.5rem 1.5rem; border-radius: var(--radius); margin: 1rem 0;
+    }
+    .booking-details-table { background: var(--bg-2); border-radius: var(--radius-lg); padding: 1.5rem; text-align: left; margin: 1.5rem auto; max-width: 400px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .detail-row:last-child { border-bottom: none; }
+    @media (max-width: 768px) { .booking-layout { grid-template-columns: 1fr; } .provider-summary { position: static; } }
+  </style>
+</head>
+<body data-page="">
+  <div id="navbar-root"></div>
+
+  <!-- Booking Form -->
+  <div id="booking-view">
+    <div class="page-header">
+      <h1>Book a Service</h1>
+      <p>Select your preferred date and time slot</p>
+    </div>
+
+    <div class="container section">
+      <div class="booking-layout">
+        <!-- Left: Form -->
+        <div>
+          <div class="card">
+            <div class="card-header">📅 Booking Details</div>
+            <div class="card-body">
+              <div id="alert-area"></div>
+
+              <div class="form-group">
+                <label class="form-label">Service Date</label>
+                <input type="date" id="booking-date" class="form-control" min="">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Preferred Time</label>
+                <div class="time-grid" id="time-grid">
+                  ${['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'].map(t => {
+                    const [h, m] = t.split(':');
+                    const hr = parseInt(h);
+                    const label = `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+                    return `<div class="time-chip" data-time="${t}:00" onclick="selectTime('${t}:00', this)">${label}</div>`;
+                  }).join('')}
+                </div>
+                <input type="hidden" id="booking-time">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Service Address</label>
+                <textarea class="form-control" id="address" placeholder="Full address where the service is needed" rows="2"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Special Notes (optional)</label>
+                <textarea class="form-control" id="notes" placeholder="Any special instructions or requirements..." rows="2"></textarea>
+              </div>
+
+              <button class="btn btn-primary btn-block btn-lg" id="book-btn" onclick="submitBooking()">Confirm Booking</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Provider summary -->
+        <div class="provider-summary" id="provider-summary">
+          <div style="text-align:center;padding:2rem;"><span class="loading-spinner"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation View -->
+  <div class="container">
+    <div class="confirmation" id="confirmation-view">
+      <div class="confirmation-icon">🎉</div>
+      <h2>Booking Confirmed!</h2>
+      <p style="color:var(--ink-3);">Your booking has been sent to the provider. You'll be notified once they accept.</p>
+      <div class="booking-ref" id="conf-ref">#NL-0000</div>
+      <div class="booking-details-table" id="conf-details"></div>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+        <a href="/pages/dashboard.html" class="btn btn-primary">View My Bookings</a>
+        <a href="/" class="btn btn-ghost">Back to Home</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-root"></div>
+  <div id="toast-container"></div>
+  <script src="/js/app.js"></script>
+  <script>
+    if (!Auth.requireLogin()) {}
+    if (Auth.isProvider()) { showToast('Providers cannot book services', 'error'); setTimeout(() => window.location.href = '/', 1000); }
+
+    const params = new URLSearchParams(window.location.search);
+    const serviceId = params.get('service');
+    const providerId = params.get('provider');
+    let selectedTime = null;
+    let serviceData = null;
+
+    // Set min date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').min = today;
+    document.getElementById('booking-date').value = today;
+
+    function selectTime(time, el) {
+      selectedTime = time;
+      document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('booking-time').value = time;
+    }
+
+    async function loadProviderInfo() {
+      try {
+        const providers = await api.get(`/services/providers?sort=trust`);
+        const p = providers.find(x => x.provider_id == providerId && x.service_id == serviceId);
+        serviceData = p;
+
+        if (!p) {
+          document.getElementById('provider-summary').innerHTML = '<div class="alert alert-error">Provider not found</div>';
+          return;
+        }
+
+        const trustClass = getTrustClass(p.trust_score);
+        document.getElementById('provider-summary').innerHTML = `
+          <div style="text-align:center;">
+            <div class="provider-avatar" style="margin:0 auto 0.75rem;background:${getCategoryStyle(p.category_name).bg};">
+              ${p.category_icon || getCategoryStyle(p.category_name).icon}
+            </div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;">${p.name}</div>
+            <div style="font-size:0.85rem;color:var(--ink-3);margin:0.3rem 0;">${p.service_title}</div>
+            <div class="stars">${renderStars(p.avg_rating)}</div>
+            <div style="font-size:0.8rem;color:var(--ink-3);">${p.total_reviews} reviews · ${p.completed_jobs} jobs done</div>
+          </div>
+          <hr style="margin:1.2rem 0;border-color:var(--border);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem;color:var(--ink-3);">Trust Score</span>
+            <span class="trust-score ${trustClass}" style="width:auto;height:auto;border-radius:8px;padding:0.2rem 0.6rem;font-size:0.9rem;">${p.trust_score}/10</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem;color:var(--ink-3);">Rate</span>
+            <span style="font-weight:700;color:var(--primary);">${formatCurrency(p.price_per_hour)}/hr</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem;color:var(--ink-3);">Location</span>
+            <span style="font-size:0.85rem;">📍 ${p.location || 'Nearby'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:0.85rem;color:var(--ink-3);">Status</span>
+            ${p.is_available ? '<span class="badge badge-success">Available Now</span>' : '<span class="badge badge-warning">Busy</span>'}
+          </div>
+          <div style="background:var(--bg-2);border-radius:var(--radius);padding:0.8rem;margin-top:1.2rem;font-size:0.82rem;color:var(--ink-3);">
+            🛡️ Verified provider with ${p.experience_years || 0}+ years of experience
+          </div>`;
+      } catch (e) {
+        document.getElementById('provider-summary').innerHTML = '<div class="alert alert-error">Failed to load provider info</div>';
+      }
+    }
+
+    async function submitBooking() {
+      const date = document.getElementById('booking-date').value;
+      const time = document.getElementById('booking-time').value;
+      const address = document.getElementById('address').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+      const alertArea = document.getElementById('alert-area');
+      const btn = document.getElementById('book-btn');
+      alertArea.innerHTML = '';
+
+      if (!date) { alertArea.innerHTML = '<div class="alert alert-error">Please select a date</div>'; return; }
+      if (!time) { alertArea.innerHTML = '<div class="alert alert-error">Please select a time slot</div>'; return; }
+      if (!address) { alertArea.innerHTML = '<div class="alert alert-error">Please enter the service address</div>'; return; }
+
+      setLoading(btn, true, 'Confirming booking...');
+      try {
+        const data = await api.post('/bookings', {
+          service_id: serviceId, provider_id: providerId,
+          booking_date: date, booking_time: time, address, notes
+        });
+
+        // Show confirmation
+        document.getElementById('booking-view').style.display = 'none';
+        document.getElementById('conf-ref').textContent = `#NL-${String(data.booking_id).padStart(4, '0')}`;
+        document.getElementById('conf-details').innerHTML = `
+          <div class="detail-row"><span>Service</span><span>${serviceData?.service_title || 'Service'}</span></div>
+          <div class="detail-row"><span>Provider</span><span>${serviceData?.name || '—'}</span></div>
+          <div class="detail-row"><span>Date</span><span>${formatDate(date)}</span></div>
+          <div class="detail-row"><span>Time</span><span>${formatTime(time)}</span></div>
+          <div class="detail-row"><span>Address</span><span>${address}</span></div>
+          <div class="detail-row"><span>Amount</span><span>${formatCurrency(serviceData?.price_per_hour || 0)}</span></div>
+        `;
+        document.getElementById('confirmation-view').classList.add('visible');
+        showToast('Booking confirmed! 🎉', 'success');
+      } catch (e) {
+        alertArea.innerHTML = `<div class="alert alert-error">⚠ ${e.message}</div>`;
+        setLoading(btn, false);
+      }
+    }
+
+    loadProviderInfo();
+  </script>
+</body>
+</html>
