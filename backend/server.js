@@ -32,9 +32,9 @@ app.get('/pages/:page', (req, res, next) => {
 
 // Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-  }
+  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
+
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 app.listen(PORT, () => {
