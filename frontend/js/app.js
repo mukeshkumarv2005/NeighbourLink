@@ -1,6 +1,6 @@
 /* NeighborLink - Shared JS Utilities */
 
-const API_BASE = '/api';
+const API_BASE = 'https://neighborlink-ibol.onrender.com/api';
 
 // ── TOKEN / AUTH HELPERS ──────────────────────
 const Auth = {

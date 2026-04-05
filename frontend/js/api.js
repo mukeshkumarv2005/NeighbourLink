@@ -1,5 +1,5 @@
 // API Client for NeighborLink
-const API_BASE = '/api';
+const API_BASE = 'https://neighborlink-ibol.onrender.com/api';
 
 const Api = {
   getToken: () => localStorage.getItem('nl_token'),
