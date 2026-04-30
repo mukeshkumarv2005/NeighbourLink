@@ -1,6 +1,6 @@
 // API Client for NeighborLink (Netlify Compatible)
 
-const API_BASE = '/api';
+const API_BASE = '/.netlify/functions';
 
 const Api = {
   getToken: () => localStorage.getItem('nl_token'),
@@ -219,4 +219,60 @@ function renderNavUser() {
 function logout() {
   Api.logout();
   Toast.success('Logged out successfully!');
+}
+
+// ================= ALIASES =================
+// Pages use lowercase `api` — create alias
+const api = Api;
+
+// ================= RENDER HELPERS =================
+
+function renderStars(rating) {
+  const full = Math.round(rating || 0);
+  return '★'.repeat(full) + '☆'.repeat(5 - full);
+}
+
+function getTrustClass(score) {
+  if (score >= 7) return 'trust-high';
+  if (score >= 4) return 'trust-mid';
+  return 'trust-low';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return '—';
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h);
+  return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+}
+
+function formatCurrency(amount) {
+  return '₹' + parseFloat(amount || 0).toFixed(0);
+}
+
+function getBadgeClass(status) {
+  const map = {
+    pending: 'badge-pending',
+    accepted: 'badge-accepted',
+    rejected: 'badge-rejected',
+    completed: 'badge-completed',
+    cancelled: 'badge-cancelled'
+  };
+  return map[status] || 'badge-ghost';
+}
+
+function getStatusIcon(status) {
+  const map = {
+    pending: '⏳',
+    accepted: '✅',
+    rejected: '❌',
+    completed: '🎉',
+    cancelled: '🚫'
+  };
+  return map[status] || '•';
 }

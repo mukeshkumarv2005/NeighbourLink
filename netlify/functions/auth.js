@@ -8,7 +8,11 @@ const pool = new Pool({
 });
 
 exports.handler = async (event) => {
-  const path = event.path.replace('/.netlify/functions/auth', '');
+  const base = event.path.includes('/api/auth')
+    ? '/api/auth'
+    : '/.netlify/functions/auth';
+
+  const path = event.path.replace(base, '');
   const method = event.httpMethod;
 
   const headers = {

@@ -20,7 +20,11 @@ function getUser(event) {
 }
 
 exports.handler = async (event) => {
-  const path = event.path.replace('/.netlify/functions/bookings', '');
+  const base = event.path.includes('/api/bookings')
+    ? '/api/bookings'
+    : '/.netlify/functions/bookings';
+
+  const path = event.path.replace(base, '');
   const method = event.httpMethod;
 
   const headers = {

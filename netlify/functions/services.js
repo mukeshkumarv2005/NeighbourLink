@@ -20,7 +20,11 @@ function getUser(event) {
 }
 
 exports.handler = async (event) => {
-  const path = event.path.replace('/.netlify/functions/services', '');
+  const base = event.path.includes('/api/services')
+    ? '/api/services'
+    : '/.netlify/functions/services';
+
+  const path = event.path.replace(base, '');
   const method = event.httpMethod;
 
   const headers = {
@@ -49,7 +53,7 @@ exports.handler = async (event) => {
 
     // ================= PROVIDERS LIST =================
     if (method === 'GET' && path === '/providers') {
-      const params = new URLSearchParams(event.rawQuery || '');
+      const params = new URLSearchParams(event.queryStringParameters || {});
       const category_id = params.get('category_id');
       const search = params.get('search');
       const min_rating = params.get('min_rating');
