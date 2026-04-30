@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <h3 style="font-size:1.1rem;font-weight:800;">Booking #${b.id}</h3>
       ${Format.statusBadge(b.status)}
     </div>
-    <div class="detail-row"><div class="detail-icon">🔧</div><div><div class="detail-label">Service</div><div class="detail-value">${b.service_icon||''} ${b.service_name}</div></div></div>
+    <div class="detail-row"><div class="detail-icon">🔧</div><div><div class="detail-label">Service</div><div class="detail-value">${getCategoryIcon(b.service_name)} ${b.service_name}</div></div></div>
     ${b.provider_name ? `<div class="detail-row"><div class="detail-icon">👤</div><div><div class="detail-label">Provider</div><div class="detail-value">${b.provider_name}</div>${b.provider_phone ? `<div style="font-size:0.82rem;color:var(--ink-3);">📞 ${b.provider_phone}</div>` : ''}</div></div>` : ''}
     ${b.customer_name ? `<div class="detail-row"><div class="detail-icon">👤</div><div><div class="detail-label">Customer</div><div class="detail-value">${b.customer_name}</div></div></div>` : ''}
     <div class="detail-row"><div class="detail-icon">📅</div><div><div class="detail-label">Scheduled Date & Time</div><div class="detail-value">${Format.date(b.scheduled_date)} at ${Format.time(b.scheduled_time)}</div></div></div>

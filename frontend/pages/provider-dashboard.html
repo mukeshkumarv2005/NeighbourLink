@@ -199,7 +199,7 @@ function renderPendingList() {
   }
   el.innerHTML = pending.map(b => `
     <div style="display:flex;align-items:center;gap:1rem;padding:0.85rem 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:1.4rem;">${b.service_icon||'🔧'}</div>
+      <div style="font-size:1.4rem;">${getCategoryIcon(b.service_name)}</div>
       <div style="flex:1;">
         <div style="font-weight:600;font-size:0.9rem;">${b.customer_name}</div>
         <div style="font-size:0.78rem;color:var(--ink-3);">${b.service_name} · ${Format.date(b.scheduled_date)} at ${Format.time(b.scheduled_time)}</div>
@@ -220,7 +220,7 @@ function renderRequestsGrid(bookings) {
   grid.innerHTML = bookings.map(b => `
     <div class="card" style="transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.85rem;">
-        <div style="display:flex;align-items:center;gap:0.5rem;"><span style="font-size:1.2rem;">${b.service_icon||'🔧'}</span><span style="font-weight:700;font-size:0.92rem;">${b.service_name}</span></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;"><span style="font-size:1.2rem;">${getCategoryIcon(b.service_name)}</span><span style="font-weight:700;font-size:0.92rem;">${b.service_name}</span></div>
         ${Format.statusBadge(b.status)}
       </div>
       <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.85rem;color:var(--ink-2);margin-bottom:1rem;">
@@ -250,7 +250,7 @@ function renderHistoryTable(bookings) {
     <tr>
       <td style="font-weight:600;color:var(--ink-3);">#${b.id}</td>
       <td><strong>${b.customer_name}</strong><div style="font-size:0.75rem;color:var(--ink-4);">${b.customer_phone||''}</div></td>
-      <td>${b.service_icon||''} ${b.service_name}</td>
+      <td>${getCategoryIcon(b.service_name)} ${b.service_name}</td>
       <td><div>${Format.date(b.scheduled_date)}</div><div style="font-size:0.75rem;color:var(--ink-4);">${Format.time(b.scheduled_time)}</div></td>
       <td>${Format.statusBadge(b.status)}</td>
       <td>

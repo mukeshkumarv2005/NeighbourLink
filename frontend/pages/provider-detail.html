@@ -127,7 +127,7 @@ async function loadProvider() {
               <h2 style="font-size:1.75rem;margin:0;">${p.name}</h2>
               <span class="trust-badge">🛡️ Trust Score: ${parseFloat(p.trust_score).toFixed(1)}</span>
             </div>
-            <div style="font-size:1rem;color:var(--ink-3);margin-top:0.3rem;">${p.category_icon} ${p.category_name} · ${p.experience_years} years experience</div>
+            <div style="font-size:1rem;color:var(--ink-3);margin-top:0.3rem;">${getCategoryIcon(p.category_name)} ${p.category_name} · ${p.experience_years} years experience</div>
             <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;flex-wrap:wrap;">
               <span class="stars">${Format.stars(p.avg_rating)}</span>
               <span style="font-weight:700;">${parseFloat(p.avg_rating||0).toFixed(1)}</span>

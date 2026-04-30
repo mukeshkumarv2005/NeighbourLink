@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env'), override: true });
+require('dotenv').config({ path: path.resolve(__dirname, '.env'), override: true });
 
 const app = express();
 const PORT = process.env.PORT || 3000;

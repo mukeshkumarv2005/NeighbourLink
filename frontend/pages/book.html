@@ -151,7 +151,7 @@
         document.getElementById('provider-summary').innerHTML = `
           <div style="text-align:center;">
             <div class="provider-avatar" style="margin:0 auto 0.75rem;background:${getCategoryStyle(p.category_name).bg};">
-              ${p.category_icon || getCategoryStyle(p.category_name).icon}
+              ${getCategoryIcon(p.category_name)}
             </div>
             <div style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;">${p.name}</div>
             <div style="font-size:0.85rem;color:var(--ink-3);margin:0.3rem 0;">${p.service_title}</div>

@@ -124,14 +124,18 @@
       <div class="form-group">
         <label class="form-label">Overall Rating *</label>
         <div style="display:flex;gap:0.5rem;" id="star-rating">
-          ${[1,2,3,4,5].map(n => `<button type="button" class="star-btn" data-val="${n}" onclick="setRating(${n})" style="font-size:1.8rem;color:#d1d5db;cursor:pointer;background:none;border:none;transition:color 0.1s;">★</button>`).join('')}
+          <button type="button" class="star-btn" data-val="1" onclick="setRating(1)" style="font-size:1.2rem;padding:0.5rem 0.75rem;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">1</button>
+          <button type="button" class="star-btn" data-val="2" onclick="setRating(2)" style="font-size:1.2rem;padding:0.5rem 0.75rem;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">2</button>
+          <button type="button" class="star-btn" data-val="3" onclick="setRating(3)" style="font-size:1.2rem;padding:0.5rem 0.75rem;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">3</button>
+          <button type="button" class="star-btn" data-val="4" onclick="setRating(4)" style="font-size:1.2rem;padding:0.5rem 0.75rem;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">4</button>
+          <button type="button" class="star-btn" data-val="5" onclick="setRating(5)" style="font-size:1.2rem;padding:0.5rem 0.75rem;border:2px solid #d1d5db;border-radius:8px;cursor:pointer;background:white;transition:all 0.2s;">5</button>
         </div>
         <input type="hidden" id="r-rating" value="0" />
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
-        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Quality</label><select id="r-quality" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
-        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Punctuality</label><select id="r-punct" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
-        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Communication</label><select id="r-comm" class="form-control form-select" style="font-size:0.82rem;">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Quality</label><select id="r-quality" class="form-control form-select" style="font-size:0.82rem;"><option value="">Select</option><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Very Poor</option></select></div>
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Punctuality</label><select id="r-punct" class="form-control form-select" style="font-size:0.82rem;"><option value="">Select</option><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Very Poor</option></select></div>
+        <div class="form-group"><label class="form-label" style="font-size:0.78rem;">Communication</label><select id="r-comm" class="form-control form-select" style="font-size:0.82rem;"><option value="">Select</option><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Very Poor</option></select></div>
       </div>
       <div class="form-group">
         <label class="form-label">Your Review</label>
@@ -179,7 +183,7 @@ function renderRecentBookings() {
   if (recent.length === 0) { el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--ink-3);font-size:0.88rem;">No bookings yet. <a href="/pages/services.html" style="color:var(--primary);font-weight:600;">Book your first service →</a></div>'; return; }
   el.innerHTML = recent.map(b => `
     <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">
-      <div style="font-size:1.4rem;">${b.service_icon||'🔧'}</div>
+      <div style="font-size:1.4rem;">${getCategoryIcon(b.service_name)}</div>
       <div style="flex:1;"><div style="font-weight:600;font-size:0.88rem;">${b.service_name}</div><div style="font-size:0.78rem;color:var(--ink-3);">${b.provider_name} · ${Format.date(b.scheduled_date)}</div></div>
       ${Format.statusBadge(b.status)}
     </div>`).join('');
@@ -194,7 +198,7 @@ function renderBookingsTable(bookings) {
   tbody.innerHTML = bookings.map(b => `
     <tr>
       <td style="font-weight:600;color:var(--ink-3);">#${b.id}</td>
-      <td><div style="display:flex;align-items:center;gap:0.5rem;"><span>${b.service_icon||'🔧'}</span><span style="font-weight:600;">${b.service_name}</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:0.5rem;"><span>${getCategoryIcon(b.service_name)}</span><span style="font-weight:600;">${b.service_name}</span></div></td>
       <td>${b.provider_name}<div style="font-size:0.75rem;color:var(--ink-4);">${b.provider_phone||''}</div></td>
       <td><div style="font-size:0.88rem;">${Format.date(b.scheduled_date)}</div><div style="font-size:0.75rem;color:var(--ink-3);">${Format.time(b.scheduled_time)}</div></td>
       <td>${Format.statusBadge(b.status)}</td>
@@ -231,7 +235,7 @@ async function loadCategories() {
   if (!res.success) return;
   const el = document.getElementById('quick-cats');
   el.innerHTML = res.categories.slice(0,6).map(c => `
-    <a href="/pages/services.html?category=${c.id}" class="filter-chip" style="text-decoration:none;">${c.icon} ${c.name}</a>`).join('');
+    <a href="/pages/services.html?category=${c.id}" class="filter-chip" style="text-decoration:none;">${c.name}</a>`).join('');
 }
 
 async function loadNotifications() {
