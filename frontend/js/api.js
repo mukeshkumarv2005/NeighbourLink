@@ -276,3 +276,18 @@ function getStatusIcon(status) {
   };
   return map[status] || '•';
 }
+
+// ================= FORMAT NAMESPACE =================
+// Used by provider-detail, dashboard, provider-dashboard, booking-confirmation pages
+
+const Format = {
+  stars: (rating) => renderStars(rating),
+  date: (dateStr) => formatDate(dateStr),
+  time: (timeStr) => formatTime(timeStr),
+  currency: (amount) => formatCurrency(amount),
+  statusBadge: (status) => {
+    const badgeClass = getBadgeClass(status);
+    const icon = getStatusIcon(status);
+    return `<span class="badge ${badgeClass}">${icon} ${status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}</span>`;
+  }
+};

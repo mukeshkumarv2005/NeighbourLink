@@ -108,7 +108,7 @@ exports.handler = async (event) => {
       const id = path.split('/')[2];
 
       const { rows } = await pool.query(
-        `SELECT p.*, u.name, u.email, u.phone, u.avatar,
+        `SELECT p.*, u.name, u.email, u.phone, u.avatar, u.address,
                 u.created_at as member_since,
                 c.name as category_name, c.icon as category_icon
          FROM providers p
