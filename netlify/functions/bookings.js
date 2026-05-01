@@ -190,6 +190,19 @@ exports.handler = async (event) => {
         [status, id]
       );
 
+      // Recalculate provider's job counts from bookings
+      const bookingResult = await pool.query('SELECT provider_id FROM bookings WHERE id = $1', [id]);
+      if (bookingResult.rows.length > 0) {
+        const providerId = bookingResult.rows[0].provider_id;
+        await pool.query(
+          `UPDATE providers SET
+            total_jobs = (SELECT COUNT(*) FROM bookings WHERE provider_id = $1 AND status IN ('accepted', 'completed')),
+            completed_jobs = (SELECT COUNT(*) FROM bookings WHERE provider_id = $1 AND status = 'completed')
+          WHERE id = $1`,
+          [providerId]
+        );
+      }
+
       return {
         statusCode: 200,
         headers,
@@ -206,10 +219,79 @@ exports.handler = async (event) => {
       const id = path.split('/')[1];
       const { rating, quality_rating, punctuality_rating, communication_rating, review_text } = JSON.parse(event.body);
 
+      // Get the provider_id from the booking
+      const bookingResult = await pool.query('SELECT provider_id FROM bookings WHERE id = $1', [parseInt(id)]);
+      if (bookingResult.rows.length === 0) {
+        return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Booking not found' }) };
+      }
+      const providerId = bookingResult.rows[0].provider_id;
+
+      // Insert the review
       await pool.query(
         `INSERT INTO reviews (booking_id, user_id, provider_id, rating, quality_rating, punctuality_rating, communication_rating, review_text)
-         SELECT $3, $4, provider_id, $1, $5, $6, $7, $2 FROM bookings WHERE id = $3`,
-        [rating, review_text || '', parseInt(id), user.id, quality_rating || rating, punctuality_rating || rating, communication_rating || rating]
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          parseInt(id),
+          user.id,
+          providerId,
+          rating,
+          quality_rating || rating,
+          punctuality_rating || rating,
+          communication_rating || rating,
+          review_text || ''
+        ]
+      );
+
+      // Recalculate provider's avg_rating and trust_score from all reviews
+      const statsResult = await pool.query(
+        `SELECT 
+          COALESCE(AVG(rating), 0) as avg_rating,
+          COALESCE(AVG(quality_rating), 0) as avg_quality,
+          COALESCE(AVG(punctuality_rating), 0) as avg_punctuality,
+          COALESCE(AVG(communication_rating), 0) as avg_communication,
+          COUNT(*) as review_count
+        FROM reviews WHERE provider_id = $1`,
+        [providerId]
+      );
+
+      const stats = statsResult.rows[0];
+      const avgRating = parseFloat(stats.avg_rating);
+
+      // Get job completion stats
+      const jobStats = await pool.query(
+        `SELECT 
+          COUNT(*) FILTER (WHERE status IN ('accepted', 'completed')) as total_jobs,
+          COUNT(*) FILTER (WHERE status = 'completed') as completed_jobs
+        FROM bookings WHERE provider_id = $1`,
+        [providerId]
+      );
+
+      const totalJobs = parseInt(jobStats.rows[0].total_jobs) || 0;
+      const completedJobs = parseInt(jobStats.rows[0].completed_jobs) || 0;
+      const completionRate = totalJobs > 0 ? completedJobs / totalJobs : 0;
+
+      // Trust Score = 40% rating + 30% completion rate + 20% responsiveness + 10% review count
+      const trustScore = Math.min(10,
+        (avgRating / 5 * 10 * 0.4) +          // 40% from rating (scaled to 10)
+        (completionRate * 10 * 0.3) +           // 30% from completion rate
+        (3.0) +                                 // 20% default responsiveness (decent)
+        (Math.min(stats.review_count, 10) / 10 * 10 * 0.1)  // 10% from review count (cap at 10)
+      );
+
+      await pool.query(
+        `UPDATE providers SET 
+          avg_rating = $1, 
+          trust_score = $2,
+          total_jobs = $3,
+          completed_jobs = $4
+        WHERE id = $5`,
+        [
+          avgRating.toFixed(2),
+          trustScore.toFixed(2),
+          totalJobs,
+          completedJobs,
+          providerId
+        ]
       );
 
       return {
