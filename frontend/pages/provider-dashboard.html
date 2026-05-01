@@ -176,7 +176,7 @@ async function updateAvailability() {
 }
 
 async function loadBookings() {
-  const res = await Api.myBookings();
+  const res = await Api.providerBookings();
   if (!res.success) return;
   allBookings = res.bookings;
   

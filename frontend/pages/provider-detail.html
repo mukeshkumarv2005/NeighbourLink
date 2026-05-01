@@ -248,7 +248,7 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
   if (res.success) {
     closeModal();
     Toast.success('Booking confirmed! Check your dashboard for updates.');
-    setTimeout(() => window.location.href = `/pages/booking-confirmation.html?id=${res.booking_id}`, 1200);
+    setTimeout(() => window.location.href = `/pages/booking-confirmation.html?id=${res.booking.id}`, 1200);
   } else {
     errEl.style.display = 'block';
     errEl.textContent = res.message || 'Booking failed. Please try again.';

@@ -194,10 +194,26 @@ exports.handler = async (event) => {
         };
       }
 
+      const userData = rows[0];
+
+      // If provider, also fetch provider profile data
+      if (userData.role === 'provider') {
+        const providerResult = await pool.query(
+          `SELECT p.*, c.name as category_name, c.icon as category_icon
+           FROM providers p
+           JOIN categories c ON p.category_id = c.id
+           WHERE p.user_id = $1`,
+          [userData.id]
+        );
+        if (providerResult.rows.length > 0) {
+          userData.provider = providerResult.rows[0];
+        }
+      }
+
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, user: rows[0] })
+        body: JSON.stringify({ success: true, user: userData })
       };
     }
 

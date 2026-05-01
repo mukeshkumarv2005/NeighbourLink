@@ -101,6 +101,7 @@ const Api = {
 
   createBooking: (data) => Api.post('/bookings', data),
   myBookings: () => Api.get('/bookings/my'),
+  providerBookings: () => Api.get('/bookings/provider'),
   booking: (id) => Api.get(`/bookings/${id}`),
 
   updateBookingStatus: (id, status) =>

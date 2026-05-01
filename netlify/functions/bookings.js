@@ -30,6 +30,7 @@ exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Content-Type': 'application/json'
   };
 
@@ -85,16 +86,24 @@ exports.handler = async (event) => {
       };
     }
 
-    // ================= MY BOOKINGS =================
+    // ================= MY BOOKINGS (for customers) =================
     if (method === 'GET' && path === '/my') {
       if (!user) {
         return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
       }
 
       const { rows } = await pool.query(
-        `SELECT * FROM bookings 
-         WHERE user_id = $1 
-         ORDER BY created_at DESC`,
+        `SELECT b.*,
+                c.name as service_name, c.icon as service_icon,
+                pu.name as provider_name, pu.phone as provider_phone,
+                cu.name as customer_name, cu.phone as customer_phone
+         FROM bookings b
+         JOIN categories c ON b.category_id = c.id
+         JOIN providers p ON b.provider_id = p.id
+         JOIN users pu ON p.user_id = pu.id
+         JOIN users cu ON b.user_id = cu.id
+         WHERE b.user_id = $1
+         ORDER BY b.created_at DESC`,
         [user.id]
       );
 
@@ -105,66 +114,47 @@ exports.handler = async (event) => {
       };
     }
 
-    // ================= SINGLE BOOKING =================
-    if (method === 'GET' && path.startsWith('/')) {
-      const id = path.split('/')[1];
+    // ================= PROVIDER BOOKINGS =================
+    if (method === 'GET' && path === '/provider') {
+      if (!user) {
+        return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
+      }
+
+      // Find the provider record for this user
+      const providerResult = await pool.query(
+        'SELECT id FROM providers WHERE user_id = $1',
+        [user.id]
+      );
+
+      if (providerResult.rows.length === 0) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, bookings: [] })
+        };
+      }
+
+      const providerId = providerResult.rows[0].id;
 
       const { rows } = await pool.query(
-        `SELECT * FROM bookings WHERE id = $1`,
-        [id]
-      );
-
-      if (rows.length === 0) {
-        return { statusCode: 404, headers, body: JSON.stringify({ message: 'Not found' }) };
-      }
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, booking: rows[0] })
-      };
-    }
-
-    // ================= UPDATE STATUS =================
-    if (method === 'PATCH' && path.includes('/status')) {
-      if (!user) {
-        return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
-      }
-
-      const id = path.split('/')[1];
-      const { status } = JSON.parse(event.body);
-
-      await pool.query(
-        `UPDATE bookings SET status = $1 WHERE id = $2`,
-        [status, id]
+        `SELECT b.*,
+                c.name as service_name, c.icon as service_icon,
+                pu.name as provider_name, pu.phone as provider_phone,
+                cu.name as customer_name, cu.phone as customer_phone
+         FROM bookings b
+         JOIN categories c ON b.category_id = c.id
+         JOIN providers p ON b.provider_id = p.id
+         JOIN users pu ON p.user_id = pu.id
+         JOIN users cu ON b.user_id = cu.id
+         WHERE b.provider_id = $1
+         ORDER BY b.created_at DESC`,
+        [providerId]
       );
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, message: 'Status updated' })
-      };
-    }
-
-    // ================= REVIEW =================
-    if (method === 'POST' && path.includes('/review')) {
-      if (!user) {
-        return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
-      }
-
-      const id = path.split('/')[1];
-      const { rating, review_text } = JSON.parse(event.body);
-
-      await pool.query(
-        `INSERT INTO reviews (booking_id, user_id, provider_id, rating, review_text)
-         SELECT id, user_id, provider_id, $1, $2 FROM bookings WHERE id = $3`,
-        [rating, review_text || '', id]
-      );
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, message: 'Review added' })
+        body: JSON.stringify({ success: true, bookings: rows })
       };
     }
 
@@ -183,6 +173,81 @@ exports.handler = async (event) => {
         statusCode: 200,
         headers,
         body: JSON.stringify({ success: true, notifications: rows })
+      };
+    }
+
+    // ================= UPDATE STATUS =================
+    if (method === 'PATCH' && path.includes('/status')) {
+      if (!user) {
+        return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
+      }
+
+      const id = path.split('/')[1];
+      const { status } = JSON.parse(event.body);
+
+      await pool.query(
+        `UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2`,
+        [status, id]
+      );
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, message: 'Status updated' })
+      };
+    }
+
+    // ================= REVIEW =================
+    if (method === 'POST' && path.includes('/review')) {
+      if (!user) {
+        return { statusCode: 401, headers, body: JSON.stringify({ message: 'Unauthorized' }) };
+      }
+
+      const id = path.split('/')[1];
+      const { rating, quality_rating, punctuality_rating, communication_rating, review_text } = JSON.parse(event.body);
+
+      await pool.query(
+        `INSERT INTO reviews (booking_id, user_id, provider_id, rating, quality_rating, punctuality_rating, communication_rating, review_text)
+         SELECT $3, $4, provider_id, $1, $5, $6, $7, $2 FROM bookings WHERE id = $3`,
+        [rating, review_text || '', parseInt(id), user.id, quality_rating || rating, punctuality_rating || rating, communication_rating || rating]
+      );
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, message: 'Review added' })
+      };
+    }
+
+    // ================= SINGLE BOOKING =================
+    if (method === 'GET' && path.startsWith('/')) {
+      const id = path.split('/')[1];
+      if (!id || id === '') {
+        return { statusCode: 404, headers, body: JSON.stringify({ message: 'Not found' }) };
+      }
+
+      const { rows } = await pool.query(
+        `SELECT b.*,
+                c.name as service_name, c.icon as service_icon,
+                pu.name as provider_name, pu.phone as provider_phone,
+                cu.name as customer_name, cu.phone as customer_phone
+         FROM bookings b
+         JOIN categories c ON b.category_id = c.id
+         JOIN providers p ON b.provider_id = p.id
+         JOIN users pu ON p.user_id = pu.id
+         JOIN users cu ON b.user_id = cu.id
+         WHERE b.id = $1`,
+        [id]
+      );
+
+      if (rows.length === 0) {
+        return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Not found' }) };
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, booking: rows[0] })
       };
     }
 
